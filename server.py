@@ -1,10 +1,13 @@
+import dataclasses
+import random
 import selectors
 import socket
-import types
-from threading import Thread
+import struct
 import time
+import types
+
+from threading import Thread
 from config import *
-import random
 
 team_map = {'group 1': [], 'group 2': []}
 group1_ips = []
@@ -20,14 +23,14 @@ sel = selectors.DefaultSelector()
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
     lsock.bind((host, port))
     lsock.listen()
-    print(bcolors.BOLD, 'Server started, listening on IP address ', host, bcolors.RESET)
+    print(Bold, 'Server started, listening on IP address ', host, RESET)
     lsock.setblocking(False)
     sel.register(lsock, selectors.EVENT_READ, data=None)
 
 
     def accept_wrapper(sock):
         conn, addr = sock.accept()  # Should be ready to read
-        print(bcolors.OKGREEN, 'accepted connection from', bcolors.RESET, addr)
+        print(Green, 'accepted connection from', RESET, addr)
         conn.setblocking(False)
         data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
         events = selectors.EVENT_READ | selectors.EVENT_WRITE
@@ -57,7 +60,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
                 try:
                     sel.unregister(sock)
                     sock.close()
-                    print(bcolors.BackgroundBrightMagenta + bcolors.BOLD + 'closing connection to', data.addr)
+                    print(Magenta + Bold + 'closing connection to', data.addr)
                 except:
                     pass
 
@@ -89,7 +92,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
                     try:
                         sel.unregister(sock)
                         sock.close()
-                        print(bcolors.BackgroundBrightMagenta + bcolors.BOLD + 'closing connection to', data.addr)
+                        print(Magenta + Bold + 'closing connection to', data.addr)
                     except:
                         pass
 
@@ -97,7 +100,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
     def get_char_from_client(key, mask):
         global couter_group1
         global couter_group2
-        global char_most
         sock = key.fileobj
         data = key.data
         if mask & selectors.EVENT_READ:
@@ -116,7 +118,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
                     sel.unregister(sock)
                     sock.close()
                     print(a_dict)
-                    print(bcolors.Yellow + bcolors.BOLD + 'closing connection to', data.addr)
+                    print(Yellow + Bold + 'closing connection to', data.addr)
                 except:
                     pass
         if mask & selectors.EVENT_WRITE:
@@ -139,31 +141,16 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
                     try:
                         sel.unregister(sock)
                         sock.close()
-                        print(bcolors.pink + bcolors.BOLD + 'closing connection to', data.addr)
+                        print(Cyan + Bold + 'closing connection to', data.addr)
                     except:
                         pass
                 except:
                     try:
                         sel.unregister(sock)
                         sock.close()
-                        print(bcolors.pink + bcolors.BOLD + 'closing connection to', data.addr)
+                        print(Cyan + Bold + 'closing connection to', data.addr)
                     except:
                         pass
-
-
-    def send_fun_facts():
-        print(bcolors.HEADER + bcolors.OKBLUE + "Some fun facts !!" + bcolors.RESET)
-        try:
-             char_most = max(a_dict, key=a_dict.get)
-             print(bcolors.white + "the most typed char is", char_most)
-        except:
-             char_most = 0
-        pgroup1=(couter_group1_total/total_games)*100
-        print(bcolors.OKCYAN+"Group 1 has won in ", pgroup1, "percentage og the games")
-        pgroup2 = (couter_group2_total / total_games) * 100
-        print(bcolors.OKCYAN+"Group 2 has won in ", pgroup2, "percentage og the games")
-        print(bcolors.purple+"The total games played on this server is", total_games)
-
 
     def send_udp_invaite():
         @dataclasses.dataclass
@@ -189,6 +176,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
         s = struct.pack('>H', port)
         msg = Msg(frame, type, s).msg_to_bytes()
         t_end = time.time() + 10
+        ip_start = host[:host.rfind('.') + 1]
+        ip_range_list = ['{}{}'.format(ip_start, x) for x in range(0, 256)]
         while time.time() < t_end:
             for ip in ip_range_list:
                 try:
@@ -266,8 +255,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
             group2_ips = []
             couter_group1 = 0
             couter_group2 = 0
-            send_fun_facts()
-            print(bcolors.OKCYAN + "“Game over, sending out offer requests...")
+            print(Cyan + "“Game over, sending out offer requests...")
 
 
     if __name__ == '__main__':
