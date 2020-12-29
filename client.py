@@ -1,10 +1,11 @@
 import socket
 import socket
-import getch
+#import getch
 import struct
 import time
 from threading import Thread
 from config import *
+
 
 while True:
     client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -21,14 +22,14 @@ while True:
     print(Green, "Received offer from {}, attempting to connect...".format(host) ,RESET)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((host, port_new))
-        s.send('{0}\n'.format('rak bibi').encode())
+        s.send('{0}\n'.format('rak bibi We want you 2 stay').encode())
         startgame = s.recv(1024).decode()
         print(Magenta, startgame ,Red,':') # Game Start
         game_mode = True
         def game_play():
             while game_mode:
                 try:
-                    key = getch.getche()
+                    key = 'bibi'#getch.getche()
                     s.sendall(str(key).encode('ascii'))      
                 except: break
         game = Thread(target=game_play())
