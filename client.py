@@ -16,12 +16,12 @@ while True:
     if not (data[:4] == bytes([0xfe, 0xed, 0xbe, 0xef])) or not (data[4] == 0x02):
         print("Invalid format.")
         continue
-    host = addr[0]
-    port_new = struct.unpack('>H', data[5:7])[0]
-    print(Green, "Received offer from {}, attempting to connect...".format(host) ,RESET)
+    host_ip = addr[0]
+    port_host = struct.unpack('>H', data[5:7])[0]
+    print(Green, "Received offer from {}, attempting to connect...".format(host_ip) ,RESET)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((host, port_new))
-        s.send('{0}\n'.format('rak bibi').encode())
+        s.connect((host, port_host))
+        s.send('{0}\n'.format('Rak Bibi!').encode())
         startgame = s.recv(1024).decode()
         print(Magenta, startgame ,Red,':') # Game Start
         game_mode = True
