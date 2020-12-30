@@ -3,7 +3,6 @@ import termios
 import atexit
 from select import select
 
-
 class KBHit:
     def __init__(self):
         self.fd = sys.stdin.fileno()

@@ -25,13 +25,12 @@ while True:
         print(Magenta, start_game, Red, ':')  # Game Start
         end_time = time.time()+10
         def game_play():
+            kb = kbhit.KBHit()
             while time.time() < end_time:
-                kb = kbhit.KBHit()
                 try:
                     if kb.kbhit() :
-                        kb.set_normal_term()
-                        s.send(b'key')
-                        print('.', end='')
+                        kb.__init__()
+                        s.send(b'.')
                 except:
                     break
         game_play()
