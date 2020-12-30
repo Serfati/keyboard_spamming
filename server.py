@@ -1,23 +1,22 @@
-import dataclasses
 import random
 import selectors
 import socket
 import struct
 import time
 import types
-
 from threading import Thread
+
 from config import *
 
 team_map = {'group 1': [], 'group 2': []}
 group1_ips = []
 group2_ips = []
-couter_group1 = 0
-couter_group2 = 0
-a_dict= {}
-couter_group1_total=0
-couter_group2_total=0
-total_games=0
+counter_group1 = 0
+counter_group2 = 0
+a_dict = {}
+counter_group1_total = 0
+counter_group2_total = 0
+total_games = 0
 
 sel = selectors.DefaultSelector()
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
@@ -43,10 +42,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
         if mask & selectors.EVENT_READ:
             recv_data = sock.recv(1024).decode("utf-8")  # Should be ready to read
             if recv_data:
-                if (len(team_map.get('group 1')) < len(team_map.get('group 2'))):
+                if len(team_map.get('group 1')) < len(team_map.get('group 2')):
                     team_map['group 1'].append((recv_data, key, mask))
                     group1_ips.append(data.addr)
-                elif (len(team_map.get('group 2')) > len(team_map.get('group 1'))):
+                elif len(team_map.get('group 2')) > len(team_map.get('group 1')):
                     team_map['group 2'].append((recv_data, key, mask))
                     group2_ips.append(data.addr)
                 else:
@@ -70,13 +69,13 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
         data = key.data
         if mask & selectors.EVENT_READ:
             data.outb += """Welcome to Keyboard Spamming Battle Royale.
-                            Group 1:
-                            ==
-                            {}
-                            Group 2:
-                            ==
-                            {}
-                            Start pressing keys on your keyboard as fast as you can!!""".format(group1, group2).encode('ascii')
+Group 1:
+==
+{}
+Group 2:
+==
+{}
+Start pressing keys on your keyboard as fast as you can!!""".format(group1, group2).encode('ascii')
         if mask & selectors.EVENT_WRITE:
             if data.outb:
                 try:
@@ -98,8 +97,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
 
 
     def get_char_from_client(key, mask):
-        global couter_group1
-        global couter_group2
+        global counter_group1
+        global counter_group2
         sock = key.fileobj
         data = key.data
         if mask & selectors.EVENT_READ:
@@ -109,10 +108,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
                     a_dict[recv_data.decode('ascii')] = a_dict[recv_data.decode('ascii')] + 1
                 else:
                     a_dict[recv_data.decode('ascii')] = 1
-                if (data.addr in group1_ips):
-                    couter_group1 = couter_group1 + 1
-                elif (data.addr in group2_ips):
-                    couter_group2 = couter_group2 + 1
+                if data.addr in group1_ips:
+                    counter_group1 = counter_group1 + 1
+                elif data.addr in group2_ips:
+                    counter_group2 = counter_group2 + 1
             else:
                 try:
                     sel.unregister(sock)
@@ -125,7 +124,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
             if data.outb:
                 sent = sock.send(data.outb)  # Should be ready to write
                 data.outb = data.outb[sent:]
-
 
 
     def send_game_over(key, mask, msg):
@@ -152,29 +150,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
                     except:
                         pass
 
+
     def send_udp_invaite():
-        @dataclasses.dataclass
-        class Msg:
-            Magic_cookie: bytes
-            Message_type: bytes
-            Server_port: bytes
-
-            def get_port_as_bytes(self):
-                return self.Server_port
-
-            def get_Message_type(self):
-                return self.Message_type
-
-            def get_Magic_cookie(self):
-                return self.Magic_cookie
-
-            def msg_to_bytes(self):
-                return self.Magic_cookie + self.Message_type + self.Server_port
-
         frame = bytes([0xfe, 0xed, 0xbe, 0xef])
         type = bytes([0x02])
         s = struct.pack('>H', port)
-        msg = Msg(frame, type, s).msg_to_bytes()
+        msg = frame + type + s
         t_end = time.time() + 10
         ip_start = host[:host.rfind('.') + 1]
         ip_range_list = ['{}{}'.format(ip_start, x) for x in range(0, 256)]
@@ -190,10 +171,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
 
 
     def main():
-        global group1_ips, group2_ips, team_map, couter_group1, couter_group2, a_dict, couter_group1_total, couter_group2_total, total_games
+        global group1_ips, group2_ips, team_map, counter_group1, counter_group2, a_dict, counter_group1_total, counter_group2_total, total_games
 
         while True:
-            total_games+=1
+            total_games += 1
             t1 = Thread(name='udp', target=send_udp_invaite)
             t1.setDaemon(True)
             t1.start()
@@ -224,26 +205,26 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
                         accept_wrapper(key.fileobj)
                     else:
                         get_char_from_client(key, mask)
-            if (couter_group1 > couter_group2):
+            if counter_group1 > counter_group2:
                 winner_group = "Group 1 wins!"
                 winner_group_teams = group1
-                couter_group1_total+=1
-            elif (couter_group1 < couter_group2):
+                counter_group1_total += 1
+            elif counter_group1 < counter_group2:
                 winner_group = "Group 2 wins!"
                 winner_group_teams = group2
-                couter_group2_total+=1
+                counter_group2_total += 1
             else:
                 winner_group = "Draw between Group 1 and Group 2"
                 winner_group_teams = group1 + group2
-                couter_group1_total+=1
-                couter_group2_total+=1
+                counter_group1_total += 1
+                counter_group2_total += 1
             winner_msg = """Game over!
-                            Group 1 typed in {} characters. Group 2 typed in {} characters.
-                            {} 
+Group 1 typed in {} characters. Group 2 typed in {} characters.
+{} 
 
-                            Congratulations to the winners:
-                            ==
-                            {}""".format(couter_group1, couter_group2, winner_group, winner_group_teams).encode('ascii')
+Congratulations to the winners:
+==
+{}""".format(counter_group1, counter_group2, winner_group, winner_group_teams).encode('ascii')
 
             for client in team_map.get('group 1'):
                 send_game_over(client[1], client[2], winner_msg)
@@ -253,8 +234,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
             team_map = {'group 1': [], 'group 2': []}
             group1_ips = []
             group2_ips = []
-            couter_group1 = 0
-            couter_group2 = 0
+            counter_group1 = 0
+            counter_group2 = 0
             print(Cyan + "“Game over, sending out offer requests...")
 
 
