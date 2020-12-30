@@ -1,3 +1,1 @@
-pip==20.3.3
-getch==1.0
-dataclasses==0.8
+scapy==2.4.4
