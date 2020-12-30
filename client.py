@@ -16,8 +16,7 @@ while True:
         continue
     host_ip = addr[0]
     port_host = struct.unpack('>H', data[5:7])[0]
-    print(Green, "Received offer from {}, attempting to connect...".format(
-        host_ip), RESET)
+    print(Green, "Received offer from {}, attempting to connect...".format(host_ip), RESET)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((host, port_host))
         s.send('{0}\n'.format('Rak Bibi!').encode())
