@@ -28,7 +28,7 @@ while True:
             kb = kbhit.KBHit()
             while time.time() < end_time:
                 try:
-                    if kb.kbhit() :
+                    if kb.kbhit():
                         kb.__init__()
                         s.send(b'.')
                 except:
