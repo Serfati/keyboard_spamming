@@ -26,10 +26,12 @@ while True:
         game_mode = True
 
         def game_play():
-            global game_mode
             while game_mode:
-                key = getch.getche()
-                s.sendall(str(key).encode('ascii'))
+                try:
+                    key = getch.getche()
+                    s.sendall(str(key).encode('ascii'))
+                except: break
+                
         game = Thread(target=game_play())
         game.start()
         endgame = s.recv(1024).decode()
