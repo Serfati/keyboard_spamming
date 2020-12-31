@@ -1,5 +1,9 @@
 import scapy.all as s
 
+"""
+Provide global configuration variables inside the typical 'config.py'
+"""
+
 # GLOBALS - CONSTANTS
 host = s.get_if_addr('eth1')
 host_test = s.get_if_addr('eth2')

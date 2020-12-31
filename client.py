@@ -37,28 +37,19 @@ try:
                 print(Magenta, start_game, Red, ':')  # Game Start
                 end_time = time.time() + game_time
 
-                # game mode - any key press event is caught and sent to the server
-
-                def game_play():
-                    kb = kbhit.KBHit()
-                    while time.time() < end_time:
-                        try:
-                            if kb.kbhit():
-                                kb.__init__()
-                                s.send(b'.')
-                                print('.', end='')
-                        except:
-                            break
-                game_play()
-                endgame = s.recv(RECIEVE_BUFFER_SIZE).decode()
-                print(Yellow, '\n', endgame, RESET)
-        except ConnectionRefusedError:
-            print('Server disconnected')
-            continue
-
-        except Exception:
-            print('general_exception')
-            continue
-except KeyboardInterrupt:
-    print('bye!')
-    pass
+        def game_play():
+            """
+                This function collects characters from the keyboard and send them to the server
+            """
+            kb = kbhit.KBHit()
+            while time.time() < end_time:
+                try:
+                    if kb.kbhit():
+                        kb.__init__()
+                        s.send(b'.')
+                        print('.', end='')
+                except:
+                    break
+        game_play()
+        endgame = s.recv(1024).decode()
+        print(Yellow, '\n', endgame, RESET)
