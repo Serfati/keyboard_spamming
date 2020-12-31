@@ -3,6 +3,8 @@ import termios
 import atexit
 from select import select
 
+"""Gets a keyboard hit from standard input.  Does not echo to the screen."""
+
 class KBHit:
     def __init__(self):
         self.fd = sys.stdin.fileno()

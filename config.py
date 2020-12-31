@@ -1,12 +1,15 @@
 import scapy.all as s
 
+# GLOBALS - CONSTANTS
 host = s.get_if_addr('eth1')
 host_test = s.get_if_addr('eth2')
 port = 13117
+RECIEVE_BUFFER_SIZE = 1024
 
 game_time = 10
 udp_time = 10
 
+# COLORS
 Black = '\u001b[30;1m'
 Red = '\u001b[31;1m'
 Green = '\u001b[32;1m'
