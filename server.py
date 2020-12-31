@@ -8,13 +8,14 @@ from threading import Thread
 
 from config import *
 
-team_map = {'group 1': [], 'group 2': []}
+group1_key, group2_key = 'group 1', 'group 2'
+team_map = {group1_key: [], group2_key: []}
 group1_ips, group2_ips = [], []
 group1, group2 = [], []
 counter_group1, counter_group2 = 0, 0
-x, y = 'group 1', 'group 2'
 total_games = 0
 high_score = 0
+
 
 sel = selectors.DefaultSelector()
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
@@ -43,7 +44,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
         msg = bytes(magic) + bytes(m_type) + bytes(host_port)
         ip_start = host[:host.rfind('.') + 1]
         ip_range_list = ['{}{}'.format(ip_start, x) for x in range(0, 256)]
-        time_end = time.time() + 10
+        time_end = time.time() + udp_time
         while time.time() < time_end:
             for ip in ip_range_list:
                 sock = socket.socket(
@@ -54,21 +55,21 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
 
     def create_team(key, mask, recv_data):
         global group1_ips, group2_ips, group1, group2
-        if len(team_map.get(x)) == len(team_map.get(y)):
+        if len(team_map.get(group1_key)) == len(team_map.get(group2_key)):
             group, arr = random.choice(list(team_map.items()))
             team_map[group].append((recv_data, key, mask))
-            if group == x:
+            if group == group1_key:
                 group1_ips.append(key.data.addr)
                 group1.append(arr[0][0][:-1])
             else:
                 group2_ips.append(key.data.addr)
                 group2.append(arr[0][0][:-1])
-        elif len(team_map.get(x)) < len(team_map.get(y)):
-            team_map[x].append((recv_data, key, mask))
+        elif len(team_map.get(group1_key)) < len(team_map.get(group2_key)):
+            team_map[group1_key].append((recv_data, key, mask))
             group1_ips.append(key.data.addr)
             group1.append(recv_data)
-        elif len(team_map.get(y)) < len(team_map.get(x)):
-            team_map[y].append((recv_data, key, mask))
+        elif len(team_map.get(group2_key)) < len(team_map.get(group1_key)):
+            team_map[group2_key].append((recv_data, key, mask))
             group2_ips.append(key.data.addr)
             group2.append(recv_data)
 
@@ -111,15 +112,15 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
                 print(Cyan + Bold + 'closing connection to', data.addr)
 
     def display_team():
-        for client in team_map.get(x) + team_map.get(y):
+        for client in team_map.get(group1_key) + team_map.get(group2_key):
             sock = client[1].fileobj
             data = client[1].data
             sent_client_start_msg(sock, data, client[1], client[2])
 
     def sent_client_start_msg(sock, data, key, mask):
         if mask & selectors.EVENT_READ:
-            group1_names = ''.join([i[0] for i in team_map.get(x)])
-            group2_names = ''.join([i[0] for i in team_map.get(y)])
+            group1_names = ''.join([i[0] for i in team_map.get(group1_key)])
+            group2_names = ''.join([i[0] for i in team_map.get(group2_key)])
             start_msg = f"Welcome to Keyboard Spamming Battle Royale.\n Group 1:\n ==\n " \
                         f"{group1_names}\n Group 2:\n ==\n {group2_names}\n " \
                         f"Start pressing keys on your keyboard as fast as you can!! "
@@ -134,12 +135,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
 
     def delete_team(sock, data, key):
         try:
-            for conn in team_map.get(x):
+            for conn in team_map.get(group1_key):
                 if conn[1] == key:
-                    team_map.get(x).remove(conn)
-            for conn in team_map.get(y):
+                    team_map.get(group1_key).remove(conn)
+            for conn in team_map.get(group2_key):
                 if conn[1] == key:
-                    team_map.get(y).remove(conn)
+                    team_map.get(group2_key).remove(conn)
             sel.unregister(sock)
             sock.close()
             print(Magenta + Bold + 'closing connection to', data.addr)
@@ -150,14 +151,16 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
         global counter_group1, counter_group2
         if counter_group1 > counter_group2:
             win_group = "Group 1 wins!"
-            winner_group_teams = ''.join([i[0] for i in team_map.get(x)])
+            winner_group_teams = ''.join(
+                [i[0] for i in team_map.get(group1_key)])
         elif counter_group1 < counter_group2:
             win_group = "Group 2 wins!"
-            winner_group_teams = ''.join([i[0] for i in team_map.get(y)])
+            winner_group_teams = ''.join(
+                [i[0] for i in team_map.get(group2_key)])
         else:
             win_group = "Draw between Group 1 and Group 2"
             winner_group_teams = ''.join([i[0] for i in team_map.get(
-                x)]) + ''.join([i[0] for i in team_map.get(y)])
+                group1_key)]) + ''.join([i[0] for i in team_map.get(group2_key)])
         winner_msg = f"Game over!\nGroup 1 typed in {counter_group1} characters. Group 2 typed in {counter_group2} characters.\n" \
                      f"{win_group} \n" \
                      f"Congratulations to the winners:\n==\n{winner_group_teams}\n"
@@ -175,18 +178,22 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
         total_games += 1
         high_score = max(high_score, counter_group1, counter_group2)
         print()
-        print(BgWhite, Blue,'+'+'-'*48+'+')
+        print(Blue, BgWhite,)
+        print('+'+'-'*48+'+')
         print('|'+' '*18+'Server Stats'+' '*18+'|')
-        print('+'+'-'*48+'+',RESET)
-        print()
+        print('+'+'-'*48+'+',end='')
+        print(RESET)
         print(White, '\n* Total games played on server: {}'.format(total_games))
-        print('* Highest score: {}'.format(high_score))
-        print('* Group 1 achived {0:.2f}% from the points'.format(
-            counter_group1 * 100/(counter_group1+counter_group2+0.1)))
-        print('* Group 2 achived {0:.2f}% from the points'.format(
-            counter_group2 * 100/(counter_group1+counter_group2+0.1)), RESET)
-        print()
-        print(Blue,'+'+'-'*48+'+', RESET)
+        print('* Highest score: {} keys'.format(high_score))
+        try:
+            print('* Group 1 achived {0:.2f}% from the points'.format(
+                (counter_group1/(counter_group1+counter_group2) * 100)))
+            print('* Group 2 achived {0:.2f}% from the points'.format(
+                (counter_group2/(counter_group1+counter_group2)) * 100))
+        except:
+            pass
+        print(RESET)
+        print(Blue, '+'+'-'*48+'+', RESET)
         print()
 
     def main():
@@ -195,7 +202,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
         while True:
             t1 = Thread(name='udp', target=send_udp_broadcast, daemon=True)
             t1.start()
-            t_end = time.time() + 10
+            t_end = time.time() + udp_time
             while time.time() < t_end:
                 events = sel.select(timeout=(t_end - time.time()))
                 for key, mask in events:
@@ -219,7 +226,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
             print(Magenta + Bold + "group1 = ", group1)
             print(Red + Bold + "group2 = ", group2)
             display_team()
-            time_end = time.time() + 10
+            time_end = time.time() + game_time
             while time.time() < time_end:
                 events = sel.select(timeout=(time_end - time.time()))
                 for key, mask in events:
@@ -230,7 +237,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
                         data = key.data
                         get_char_from_client(sock, data, mask)
 
-            for client in team_map.get(x) + team_map.get(y):
+            for client in team_map.get(group1_key) + team_map.get(group2_key):
                 send_game_over(client[1], client[2],  display_game_result())
 
             stats()

@@ -1,8 +1,11 @@
 import scapy.all as s
 
-host = '127.0.0.1'#s.get_if_addr('eth1')
+host = s.get_if_addr('eth1')
 host_test = s.get_if_addr('eth2')
-port = 3000#13117
+port = 13117
+
+game_time = 10
+udp_time = 10
 
 Black = '\u001b[30;1m'
 Red = '\u001b[31;1m'

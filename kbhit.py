@@ -16,5 +16,5 @@ class KBHit:
         termios.tcsetattr(self.fd, termios.TCSAFLUSH, self.old_term)
 
     def kbhit(self):
-        dr, dw, de = select([sys.stdin], [], [], 0)
+        dr, _, _ = select([sys.stdin], [], [], 0)
         return dr != []
