@@ -11,7 +11,7 @@ from config import *
 group1_key, group2_key = 'group 1', 'group 2'
 team_map = {group1_key: [], group2_key: []}
 group1_ips, group2_ips = [], []
-group1, group2 = [], []
+group1_names, group2_names = [], []
 counter_group1, counter_group2 = 0, 0
 total_games = 0
 high_score = 0
@@ -33,7 +33,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
 
     def accept_wrapper(sock):
         """
-        Sock open TCP connection.
+        accepts connection requests from clients while still sending offer requests.
         """
         try:
             conn, address = sock.accept()  # Should be ready to read
@@ -66,26 +66,26 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
 
     def create_team(key, mask, recv_data):
         """
-        Split team into two teams in a random way
+        divides all clients into two groups in a random way.
         """
-        global group1_ips, group2_ips, group1, group2
+        global group1_ips, group2_ips, group1_names, group2_names
         if len(team_map.get(group1_key)) == len(team_map.get(group2_key)):
             group, arr = random.choice(list(team_map.items()))
             team_map[group].append((recv_data, key, mask))
             if group == group1_key:
                 group1_ips.append(key.data.addr)
-                group1.append(arr[0][0][:-1])
+                group1_names.append(arr[0][0][:-1])
             else:
                 group2_ips.append(key.data.addr)
-                group2.append(arr[0][0][:-1])
+                group2_names.append(arr[0][0][:-1])
         elif len(team_map.get(group1_key)) < len(team_map.get(group2_key)):
             team_map[group1_key].append((recv_data, key, mask))
             group1_ips.append(key.data.addr)
-            group1.append(recv_data)
+            group1_names.append(recv_data)
         elif len(team_map.get(group2_key)) < len(team_map.get(group1_key)):
             team_map[group2_key].append((recv_data, key, mask))
             group2_ips.append(key.data.addr)
-            group2.append(recv_data)
+            group2_names.append(recv_data)
 
     def get_char_from_client(sock, data, mask):
         """
@@ -93,7 +93,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
         """
         if mask & selectors.EVENT_READ:
             try:
-                recv_data = sock.recv(1024)  # Should be ready to read
+                # Should be ready to read
+                recv_data = sock.recv(RECIEVE_BUFFER_SIZE)
                 if recv_data:
                     update_counter(data)
                 else:
@@ -205,24 +206,24 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
         """
         Init the global variable before starting a new game.
         """
-        global team_map, group1_ips, group2_ips, counter_group1, counter_group2, group1, group2
+        global team_map, group1_ips, group2_ips, counter_group1, counter_group2, group1_names, group2_names
         team_map = {'group 1': [], 'group 2': []}
         group1_ips, group2_ips = [], []
-        group1, group2 = [], []
+        group1_names, group2_names = [], []
         counter_group1, counter_group2 = 0, 0
 
     def stats():
         """
         Display some fun/intersting stats when the game finished.
         """
-        global high_score, total_games, team_map, group1_ips, group2_ips, counter_group1, counter_group2, group1, group2
+        global high_score, total_games, team_map, group1_ips, group2_ips, counter_group1, counter_group2, group1_names, group2_names
         total_games += 1
         high_score = max(high_score, counter_group1, counter_group2)
         print()
         print(Blue, BgWhite,)
         print('+'+'-'*48+'+')
         print('|'+' '*18+'Server Stats'+' '*18+'|')
-        print('+'+'-'*48+'+',end='')
+        print('+'+'-'*48+'+', end='')
         print(RESET)
         print(White, '\n* Total games played on server: {}'.format(total_games))
         print('* Highest score: {} keys'.format(high_score))
@@ -238,7 +239,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
         print()
 
     def main():
-        global group1_ips, group2_ips, team_map, counter_group1, counter_group2, group1, group2
+        """
+        Main game loop, runs without stopping.
+        """
+        global group1_ips, group2_ips, team_map, counter_group1, counter_group2, group1_names, group2_names
 
         while True:
             t1 = Thread(name='udp', target=send_udp_broadcast, daemon=True)
@@ -251,7 +255,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
                         accept_wrapper(key.fileobj)
                     else:
                         if mask & selectors.EVENT_READ:
-                            recv_data = key.fileobj.recv(1024).decode(
+                            recv_data = key.fileobj.recv(RECIEVE_BUFFER_SIZE).decode(
                                 "utf-8")  # Should be ready to read
                             if recv_data:
                                 create_team(key, mask, recv_data)
@@ -264,8 +268,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
                                 except:
                                     pass
             t1.join()
-            print(Magenta + Bold + "group1 = ", group1)
-            print(Red + Bold + "group2 = ", group2)
+            print(Magenta + Bold + "group1 = ", group1_names)
+            print(Red + Bold + "group2 = ", group2_names)
             display_team()
             time_end = time.time() + game_time
             while time.time() < time_end:

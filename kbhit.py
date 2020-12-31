@@ -3,6 +3,8 @@ import termios
 import atexit
 from select import select
 
+"""Gets a keyboard hit from standard input.  Does not echo to the screen."""
+
 class KBHit:
     """
         A Python class implementing KBHIT, the standard keyboard-interrupt poller.
