@@ -5,7 +5,7 @@ import time
 from config import *
 
 """
-Client main function, runs from the beginning of the Client.
+Client main function, runs the Client.
 """
 try:
     while True:
@@ -37,19 +37,29 @@ try:
                 print(Magenta, start_game, Red, ':')  # Game Start
                 end_time = time.time() + game_time
 
-        def game_play():
-            """
-                This function collects characters from the keyboard and send them to the server
-            """
-            kb = kbhit.KBHit()
-            while time.time() < end_time:
-                try:
-                    if kb.kbhit():
-                        kb.__init__()
-                        s.send(b'.')
-                        print('.', end='')
-                except:
-                    break
-        game_play()
-        endgame = s.recv(1024).decode()
-        print(Yellow, '\n', endgame, RESET)
+                def game_play():
+                    """
+                        This function collects characters from the keyboard and send them to the server
+                    """
+                    kb = kbhit.KBHit()
+                    while time.time() < end_time:
+                        try:
+                            if kb.kbhit():
+                                kb.__init__()
+                                s.send(b'.')
+                                print('.', end='')
+                        except:
+                            break
+                game_play()
+                endgame = s.recv(1024).decode()
+                print(Yellow, '\n', endgame, RESET)
+        except ConnectionRefusedError:
+            print('Server disconnected')
+            continue
+
+        except Exception:
+            print('general_exception')
+            continue
+except KeyboardInterrupt:
+    print('bye!')
+    pass
