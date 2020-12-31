@@ -18,7 +18,12 @@ high_score = 0
 
 
 sel = selectors.DefaultSelector()
+# This module allows high-level and efficient I/O multiplexing
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
+    """
+    Sockets write into a local socket specific write buffer and read from a socket specific read buffer throughout the connection.
+    
+    """
     lsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
     lsock.bind((host, port))
     lsock.listen()
@@ -27,6 +32,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
     sel.register(lsock, selectors.EVENT_READ, data=None)
 
     def accept_wrapper(sock):
+        """
+        Sock open TCP connection.
+        """
         try:
             conn, address = sock.accept()  # Should be ready to read
             print(Green, 'accepted connection from', RESET, address)
@@ -38,9 +46,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
             pass
 
     def send_udp_broadcast():
-        magic = [0xfe, 0xed, 0xbe, 0xef]
-        m_type = [0x02]
-        host_port = struct.pack('>H', port)
+        """
+        Servers broadcast their announcements with destination port X using UDP
+        """
+        magic = [0xfe, 0xed, 0xbe, 0xef] # Magic cookie
+        m_type = [0x02] # Message type
+        host_port = struct.pack('>H', port) # Server port
         msg = bytes(magic) + bytes(m_type) + bytes(host_port)
         ip_start = host[:host.rfind('.') + 1]
         ip_range_list = ['{}{}'.format(ip_start, x) for x in range(0, 256)]
@@ -54,6 +65,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
                 sock.close()
 
     def create_team(key, mask, recv_data):
+        """
+        Split team into two teams in a random way
+        """
         global group1_ips, group2_ips, group1, group2
         if len(team_map.get(group1_key)) == len(team_map.get(group2_key)):
             group, arr = random.choice(list(team_map.items()))
@@ -74,6 +88,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
             group2.append(recv_data)
 
     def get_char_from_client(sock, data, mask):
+        """
+        Get characters from the client
+        """
         if mask & selectors.EVENT_READ:
             try:
                 recv_data = sock.recv(1024)  # Should be ready to read
@@ -91,6 +108,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
                 data.outb = data.outb[sent:]
 
     def update_counter(data):
+        """
+        Update the global counter
+        """
         if data.addr in group1_ips:
             global counter_group1
             counter_group1 += 1
@@ -99,6 +119,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
             counter_group2 += 1
 
     def send_game_over(key, mask, msg):
+        """
+        Sent to all the clients the game over message via TCP connection and close this one.
+        """
         sock = key.fileobj
         data = key.data
         if mask & selectors.EVENT_READ:
@@ -112,12 +135,18 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
                 print(Cyan + Bold + 'closing connection to', data.addr)
 
     def display_team():
+        """
+        Send to multiple client a starting message.
+        """
         for client in team_map.get(group1_key) + team_map.get(group2_key):
             sock = client[1].fileobj
             data = client[1].data
             sent_client_start_msg(sock, data, client[1], client[2])
 
     def sent_client_start_msg(sock, data, key, mask):
+        """
+        Sent to multiple clients the starting message via TCP connection.
+        """
         if mask & selectors.EVENT_READ:
             group1_names = ''.join([i[0] for i in team_map.get(group1_key)])
             group2_names = ''.join([i[0] for i in team_map.get(group2_key)])
@@ -134,6 +163,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
                     delete_team(sock, data, key)
 
     def delete_team(sock, data, key):
+        """
+        Delete team from the server.
+        """
         try:
             for conn in team_map.get(group1_key):
                 if conn[1] == key:
@@ -148,6 +180,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
             pass
 
     def display_game_result():
+        """
+        Display the winning message.
+        """
         global counter_group1, counter_group2
         if counter_group1 > counter_group2:
             win_group = "Group 1 wins!"
@@ -167,6 +202,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
         return winner_msg.encode('ascii')
 
     def init_variable():
+        """
+        Init the global variable before starting a new game.
+        """
         global team_map, group1_ips, group2_ips, counter_group1, counter_group2, group1, group2
         team_map = {'group 1': [], 'group 2': []}
         group1_ips, group2_ips = [], []
@@ -174,6 +212,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as lsock:
         counter_group1, counter_group2 = 0, 0
 
     def stats():
+        """
+        Display some fun/intersting stats when the game finished.
+        """
         global high_score, total_games, team_map, group1_ips, group2_ips, counter_group1, counter_group2, group1, group2
         total_games += 1
         high_score = max(high_score, counter_group1, counter_group2)
